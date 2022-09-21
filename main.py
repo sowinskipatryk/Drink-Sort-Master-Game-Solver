@@ -24,10 +24,17 @@ class Bottle:
 
 
 class Game:
-    bottles = []
+    def __init__(self):
+        self.bottles = []
+        self.previous_move_from = None
+        self.previous_move_to = None
 
     def add(self, bottle):
         self.bottles.append(bottle)
+
+    def status(self):
+        for i, bottle in enumerate(self.bottles):
+            print(i+1, bottle.colors)
 
     def check_data_input(self):
         color_list = []
@@ -45,9 +52,13 @@ class Game:
             if x is not y:  # if it's different from the one to pour into
                 if z + len(y.colors) <= 4:  # if there is space for a number of colors
                     if not y.colors or (x.colors[-1] == y.colors[-1]):  # if the vessel to pour into is empty or the same color
-                        for _ in range(z):  # for a number of colors
-                            y.colors.append(x.colors.pop())  # append to the second vessel the color we take from first vessel
-                        return True
+                        if not x.is_sorted():  # if the vessel to pour from is not sorted yet
+                            if self.previous_move_from is not y and self.previous_move_to is not x:  # prevent hopping between the same two vessels
+                                for _ in range(z):  # for a number of colors
+                                    y.colors.append(x.colors.pop())  # append to the second vessel the color we take from first vessel
+                                    self.previous_move_from = x
+                                    self.previous_move_to = y
+                                return True
 
     def sort(self):
         if self.all_drinks_sorted():
@@ -81,5 +92,4 @@ game.add(Bottle('orange', 'orange'))
 
 game.sort()
 
-for bottle in game.bottles:
-    print(bottle.colors)
+game.status()
