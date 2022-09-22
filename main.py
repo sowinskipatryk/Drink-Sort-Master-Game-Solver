@@ -5,9 +5,8 @@ class Bottle:
     def __init__(self, *args):
         self.capacity = 4
         self.colors = [arg for arg in args]
-        self.occupancy = len(self.colors)
 
-    def is_sorted(self):  # checks if the bottle is sorted (one color or empty)
+    def is_sorted(self):  # checks if the bottle is sorted (four segments in one color or empty)
         return (len(set(self.colors)) == 1 and len(self.colors) == 4) or not self.colors
 
     def count_same_colors(self):  # counts how many layers of the same color are in a specific vessel
@@ -26,22 +25,31 @@ class Bottle:
 class Game:
     def __init__(self):
         self.bottles = []
-        self.previous_move_from = None
-        self.previous_move_to = None
+        self.moves_history = []
+        self.bottle_from = None
+        self.bottle_to = None
+        self.recursion_level = 1
 
     def add(self, bottle):
         self.bottles.append(bottle)
 
     def status(self):
+        print()
         for i, bottle in enumerate(self.bottles):
-            print(i+1, bottle.colors)
+            if bottle is self.bottle_from:
+                print(i+1, bottle.colors, '--> FROM')
+            elif bottle is self.bottle_to:
+                print(i+1, bottle.colors, '<-- TO')
+            else:
+                print(i+1, bottle.colors)
+        print()
 
     def check_data_input(self):
         color_list = []
         for b in self.bottles:
             color_list += b.colors
         counter = Counter(color_list)
-        print(counter)
+        print('Check:', counter)
         return all(counter[each] == 4 or counter[each] == 0 for each in counter)
 
     def all_drinks_sorted(self):
@@ -53,11 +61,13 @@ class Game:
                 if z + len(y.colors) <= 4:  # if there is space for a number of colors
                     if not y.colors or (x.colors[-1] == y.colors[-1]):  # if the vessel to pour into is empty or the same color
                         if not x.is_sorted():  # if the vessel to pour from is not sorted yet
-                            if self.previous_move_from is not y and self.previous_move_to is not x:  # prevent hopping between the same two vessels
+                            if not (z + len(y.colors) == 4 and (x.count_same_colors() > z)):
+                            # if (y, x, x.colors[-1]) not in self.moves_history:  # prevent hopping between the same two vessels
                                 for _ in range(z):  # for a number of colors
                                     y.colors.append(x.colors.pop())  # append to the second vessel the color we take from first vessel
-                                    self.previous_move_from = x
-                                    self.previous_move_to = y
+                                self.moves_history.append((x, y, y.colors[-1]))
+                                self.bottle_from = x
+                                self.bottle_to = y
                                 return True
 
     def sort(self):
@@ -68,13 +78,17 @@ class Game:
             for c in self.bottles:
                 for d in range(1, b.count_same_colors() + 1):
                     if self.move(b, c, d):
-                        print('I')
+                        print('IN', self.recursion_level)
+                        self.recursion_level += 1
+                        self.status()
                         self.sort()
-        print('O')
-        return False
+                        self.moves_history.pop()
+                        self.recursion_level -= 1
+                        print('OUT', self.recursion_level)
 
 
 game = Game()
+
 game.add(Bottle('mint', 'green', 'blue', 'blue'))
 game.add(Bottle('sea', 'light blue', 'gray', 'yellow'))
 game.add(Bottle('green', 'yellow', 'gray', 'sea'))
@@ -90,6 +104,14 @@ game.add(Bottle('red', 'mint', 'mint'))
 game.add(Bottle('sea', 'skin', 'orange', 'red'))
 game.add(Bottle('orange', 'orange'))
 
-game.sort()
+if game.check_data_input():
+    print('Correct input')
+    game.status()
+    game.sort()
+else:
+    print('Invalid input\n')
 
-game.status()
+if game.all_drinks_sorted():
+    print('Sorting completed')
+else:
+    print('Sorting failed')
