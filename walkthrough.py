@@ -38,7 +38,7 @@ class Game:
         self.bottle_to = None
         self.recursion_level = 1
         self.moves_history = []
-        self.walkthrough = []
+        self.walkthrough_list = []
 
     def add_bottle(self, bottle):
         self.bottles.append(bottle)
@@ -62,6 +62,23 @@ class Game:
                 print(i+1, bottle.colors)
         print()
 
+    def footprint(self, step_hint=True):
+        string = ''
+        for i, bottle in enumerate(self.bottles):
+            if step_hint and bottle is self.bottle_from:
+                string += f'{i+1} {bottle.colors}  --> FROM\n'
+            elif step_hint and bottle is self.bottle_to:
+                string += f'{i+1} {bottle.colors}  <-- TO\n'
+            else:
+                string += f'{i+1} {bottle.colors}\n'
+        return string
+
+    def walkthrough(self):
+        print('\nWALKTHROUGH\n')
+        for i, step in enumerate(self.walkthrough_list):
+            print('Step', i+1)
+            print(step)
+
     def all_drinks_sorted(self):
         return all(bottle.is_sorted() for bottle in self.bottles)
 
@@ -74,11 +91,10 @@ class Game:
                             room_available = c.capacity - len(c.colors)
                             if room_available:  # if there is room for color to be poured
                                 if (c, b, b.colors[-1]) not in self.moves_history:  # prevent from moving one color between two vessels
-                                    print('IN', self.recursion_level)
                                     self.recursion_level += 1
                                     self.bottle_from = b
                                     self.bottle_to = c
-                                    self.status()
+                                    self.walkthrough_list.append(self.footprint())
                                     layers = min(room_available, b.count_layers())
                                     for _ in range(layers):  # for a number of colors
                                         c.colors.append(b.colors.pop())  # append to the second vessel the color we take from first vessel
@@ -97,21 +113,21 @@ class Game:
                     if not self.all_drinks_sorted():
                         for _ in range(move):
                             b.colors.append(c.colors.pop())
+                        self.walkthrough_list.pop()
                         self.moves_history.pop()
                         self.recursion_level -= 1
-                        print('OUT', self.recursion_level)
 
 
 def game_solver(game):
     if game.check_data_input():
         print('Input correct')
-        game.status()
         game.sort()
     else:
         print('Input invalid')
 
     if game.all_drinks_sorted():
         print('Sorting completed')
+        game.walkthrough()
     else:
         print('Sorting failed')
     game.status(step_hint=False)
