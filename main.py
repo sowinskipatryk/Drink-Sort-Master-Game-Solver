@@ -33,12 +33,12 @@ class Game:
     def add(self, bottle):
         self.bottles.append(bottle)
 
-    def status(self):
+    def status(self, step_hint=True):
         print()
         for i, bottle in enumerate(self.bottles):
-            if bottle is self.bottle_from:
+            if step_hint and bottle is self.bottle_from:
                 print(i+1, bottle.colors, '--> FROM')
-            elif bottle is self.bottle_to:
+            elif step_hint and bottle is self.bottle_to:
                 print(i+1, bottle.colors, '<-- TO')
             else:
                 print(i+1, bottle.colors)
@@ -49,7 +49,7 @@ class Game:
         for b in self.bottles:
             color_list += b.colors
         counter = Counter(color_list)
-        print('Check:', counter)
+        print('Input check:', counter)
         return all(counter[each] == 4 or counter[each] == 0 for each in counter)
 
     def all_drinks_sorted(self):
@@ -63,11 +63,14 @@ class Game:
                         if not x.is_sorted():  # if the vessel to pour from is not sorted yet
                             if not (z + len(y.colors) == 4 and (x.count_same_colors() > z)):
                             # if (y, x, x.colors[-1]) not in self.moves_history:  # prevent hopping between the same two vessels
+                                print('IN', self.recursion_level)
+                                self.recursion_level += 1
+                                self.bottle_from = x
+                                self.bottle_to = y
+                                self.status()
                                 for _ in range(z):  # for a number of colors
                                     y.colors.append(x.colors.pop())  # append to the second vessel the color we take from first vessel
                                 self.moves_history.append((x, y, y.colors[-1]))
-                                self.bottle_from = x
-                                self.bottle_to = y
                                 return True
 
     def sort(self):
@@ -78,9 +81,6 @@ class Game:
             for c in self.bottles:
                 for d in range(1, b.count_same_colors() + 1):
                     if self.move(b, c, d):
-                        print('IN', self.recursion_level)
-                        self.recursion_level += 1
-                        self.status()
                         self.sort()
                         self.moves_history.pop()
                         self.recursion_level -= 1
@@ -89,29 +89,35 @@ class Game:
 
 game = Game()
 
-game.add(Bottle('mint', 'green', 'blue', 'blue'))
-game.add(Bottle('sea', 'light blue', 'gray', 'yellow'))
-game.add(Bottle('green', 'yellow', 'gray', 'sea'))
-game.add(Bottle('light blue', 'red', 'pink', 'yellow'))
-game.add(Bottle('yellow', 'dark blue', 'pink'))
-game.add(Bottle('blue', 'skin', 'skin'))
-game.add(Bottle('pink', 'pink', 'light blue'))
-game.add(Bottle('dark blue', 'gray', 'light blue'))
-game.add(Bottle('dark blue', 'green', 'sea', 'dark blue'))
-game.add(Bottle('mint', 'green', 'orange', 'gray'))
-game.add(Bottle('blue', 'skin', 'red'))
-game.add(Bottle('red', 'mint', 'mint'))
-game.add(Bottle('sea', 'skin', 'orange', 'red'))
-game.add(Bottle('orange', 'orange'))
+# game.add(Bottle('mint', 'green', 'blue', 'blue'))
+# game.add(Bottle('sea', 'light blue', 'gray', 'yellow'))
+# game.add(Bottle('green', 'yellow', 'gray', 'sea'))
+# game.add(Bottle('light blue', 'red', 'pink', 'yellow'))
+# game.add(Bottle('yellow', 'dark blue', 'pink'))
+# game.add(Bottle('blue', 'skin', 'skin'))
+# game.add(Bottle('pink', 'pink', 'light blue'))
+# game.add(Bottle('dark blue', 'gray', 'light blue'))
+# game.add(Bottle('dark blue', 'green', 'sea', 'dark blue'))
+# game.add(Bottle('mint', 'green', 'orange', 'gray'))
+# game.add(Bottle('blue', 'skin', 'red'))
+# game.add(Bottle('red', 'mint', 'mint'))
+# game.add(Bottle('sea', 'skin', 'orange', 'red'))
+# game.add(Bottle('orange', 'orange'))
+
+game.add(Bottle('pink', 'pink', 'pink', 'blue'))
+game.add(Bottle('pink', 'purple', 'blue', 'purple'))
+game.add(Bottle('blue', 'blue'))
+game.add(Bottle('purple', 'purple'))
 
 if game.check_data_input():
-    print('Correct input')
+    print('Input correct')
     game.status()
     game.sort()
 else:
-    print('Invalid input\n')
+    print('Input invalid')
 
 if game.all_drinks_sorted():
-    print('Sorting completed')
+    print('\nSorting completed')
+    game.status(step_hint=False)
 else:
     print('Sorting failed')
